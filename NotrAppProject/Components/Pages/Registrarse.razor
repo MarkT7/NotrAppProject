@@ -1,0 +1,73 @@
+﻿@page "/registrarse"
+@using FluentValidation.Results
+@using NotrAppProject.Components.Data
+@using Microsoft.JSInterop
+@rendermode InteractiveServer
+@inject NotrAppProject.Components.Services.IUserService UserService
+@inject MudBlazor.ISnackbar Snackbar
+
+<MudSnackbarProvider/>
+<PageTitle>Home</PageTitle>
+
+<h1>Registrarse</h1>
+
+<MudCard Elevation="35">
+    <MudTextField @bind-Value="user1.email" Label="Email"></MudTextField>
+    <MudTextField @bind-Value="user1.username" Label="Nombre de usuario"></MudTextField>
+    <MudTextField @bind-Value="user1.password" Label="Contraseña"></MudTextField>
+    <MudTextField @bind-Value="password2" Label="Ingrese la contraseña de nuevo"></MudTextField>
+    <br/>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Register">Registrarse</MudButton>
+</MudCard>
+<br/>
+@debugger1
+
+
+@code{
+
+    private User user1 = new User();
+    private String password2;
+    private String debugger1;
+
+    [Inject]
+    private IJSRuntime JSRuntime { get; set; }
+
+    [Inject]
+    private NavigationManager NavigationManager { get; set; }
+
+    private void Register(){
+        debugger1 = "";
+        UserValidatorRegister validator = new UserValidatorRegister();
+        ValidationResult result = validator.Validate(user1);
+
+        if (result.IsValid && user1.password==password2)
+        {
+            debugger1 = "Validacion correcta";
+            UserService.SaveUser(user1);
+            NavigationManager.NavigateTo("/ingresar");
+            JSRuntime.InvokeVoidAsync("location.reload");
+        }
+        else
+        {
+            debugger1 = "Ocurrió un error en el registro! ";
+            foreach(var error in result.Errors)
+            {
+                if (error.PropertyName == "email")
+                {
+                    debugger1 = debugger1 + "El mail ingresado no es válido. ";
+                }else if (error.PropertyName == "username")
+                {
+                    debugger1 = debugger1 + "El nombre de usuario debe tener entre 4 y 15 caracteres. ";
+                }
+                else
+                {
+                    debugger1 = debugger1 + "La contraseña debe tener entre 4 y 15 caracteres.";
+                }
+            }
+            if (user1.password != password2)
+            {
+                debugger1 = debugger1 + " Las contraseñas ingresadas deben coincidir";
+            }
+        }
+    }
+}

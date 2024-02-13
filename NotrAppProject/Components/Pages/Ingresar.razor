@@ -1,0 +1,82 @@
+﻿@page "/ingresar"
+@rendermode InteractiveServer
+@using FluentValidation.Results
+@using NotrAppProject.Components.Data
+@inject IJSRuntime IJSRuntime
+@inject NotrAppProject.Components.Services.IUserService UserService
+
+<PageTitle>Home</PageTitle>
+
+<h1>Ingresar</h1>
+
+<MudCard Elevation="35">
+    <MudTextField @bind-Value="user1.username" Label="Nombre de usuario"></MudTextField>
+    <MudTextField @bind-Value="user1.password" Label="Contraseña"></MudTextField>
+</MudCard>
+<br/>
+<MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="LogIn">Ingresar</MudButton>
+<br/>
+<br/>
+@debugger1
+
+
+@code{
+    private User user1 = new User();
+    private String debugger1;
+
+    [Inject]
+    private IJSRuntime JSRuntime { get; set; }
+
+    [Inject]
+    private NavigationManager NavigationManager { get; set; }
+
+    private void LogIn()
+    {
+        debugger1 = "";
+        User user2 = new User();
+        user2 = UserService.GetUserByUsername(user1.username);
+
+        UserValidatorLogIn validator = new UserValidatorLogIn();
+        ValidationResult result = validator.Validate(user1);
+
+        if (result.IsValid)
+        {
+            if (user2!=null)
+            {
+                debugger1 = "";
+                if (user2.username == user1.username)
+                {
+                    if (user2.password == user1.password)
+                    {
+                        NavigationManager.NavigateTo("/Notas2");
+                        JSRuntime.InvokeVoidAsync("location.reload");
+                    }
+                    else
+                    {
+                        debugger1 = debugger1 + "La contraseña no es correcta";
+                    }
+                }
+                else
+                {
+                    debugger1 = debugger1 + "El usuario no esta registrado";
+                }
+            }
+            else
+            {
+                debugger1 = debugger1 + "El usuario no esta registrado";
+            }
+        }else{
+            foreach(var error in result.Errors)
+            {
+                if (error.PropertyName == "username")
+                {
+                    debugger1 = debugger1 + "El nombre de usuario debe tener entre 4 y 15 caracteres. ";
+                }
+                else if (error.PropertyName == "password")
+                {
+                    debugger1 = debugger1 + "La contraseña debe tener entre 4 y 15 caracteres. ";
+                }
+            }
+        }
+    }
+}
